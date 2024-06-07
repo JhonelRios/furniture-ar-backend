@@ -1,32 +1,36 @@
-# Step 1: Use the official Maven image with OpenJDK 17 to build the project
-FROM maven:3.8.6-openjdk-17-slim AS build
+# Step 1: Start with the OpenJDK 17 base image
+FROM openjdk:17-slim AS build
 
 # Set the working directory inside the container
 WORKDIR /app
 
-# Copy the pom.xml file to download dependencies
+# Install Maven
+RUN apt-get update && \
+    apt-get install -y maven
+
+# Copy the project files into the container
 COPY pom.xml ./
 
 # Fetch dependencies to improve subsequent build times unless pom.xml changes
-RUN mvn dependency:go-offline -B
+RUN mvn dependency:go-offline
 
-# Copy the project source
+# Copy the project source code
 COPY src src
 
-# Package the application
+# Build the project and package the application, skipping tests to speed up the build
 RUN mvn clean package -DskipTests
 
-# Step 2: Use OpenJDK 17 to run the application
+# Step 2: Use the same OpenJDK image to run the application
 FROM openjdk:17-slim
 
-# Set deployment directory
+# Set the deployment directory
 WORKDIR /app
 
-# Copy only the artifact from the build stage and discard the rest
+# Copy the built JAR file from the build stage
 COPY --from=build /app/target/*.jar app.jar
 
-# Command to execute the application
+# Define the command to run the application
 CMD ["java", "-jar", "app.jar"]
 
-# Optional: if your application uses a port (e.g., 8080), expose it:
+# Optional: expose the port your application uses
 EXPOSE 8080
