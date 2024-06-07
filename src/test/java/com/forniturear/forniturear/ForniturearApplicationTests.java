@@ -43,7 +43,7 @@ class ForniturearApplicationTests {
 
 	@Test
 	void shouldGetFurniture() throws Exception {
-		Furniture furniture = new Furniture(1L, "Chair", "http://example.com/chair.jpg", 120, 80, 20, 59.99, 5);
+		Furniture furniture = new Furniture(1L, "Chair", "Test description", "http://example.com/chair.jpg", 80, 20, 59.99, 5);
 
 		given(furnitureRepository.findById(1L)).willReturn(Optional.of(furniture));
 
@@ -52,5 +52,21 @@ class ForniturearApplicationTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.name").value("Chair"))
 				.andExpect(jsonPath("$.price").value(59.99));
+	}
+
+	@Test
+	void shouldCreateFurniture() throws Exception {
+		Furniture furniture = new Furniture(1L, "Table", "Test description", "http://example.com/chair.jpg", 150, 30, 149.99, 4);
+		Furniture savedFurniture = new Furniture(1L, "Table", "Test description", "http://example.com/chair.jpg", 150, 30, 149.99, 4);
+
+		given(furnitureRepository.save(furniture)).willReturn(savedFurniture);
+
+		mockMvc.perform(post("/api/furniture")
+						.contentType(MediaType.APPLICATION_JSON)
+						.content("{\"name\":\"Table\",\"imageUrl\":\"http://example.com/table.jpg\",\"height\":90,\"width\":150,\"weight\":30,\"price\":149.99,\"rating\":4}")
+						.accept(MediaType.APPLICATION_JSON))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(1L))
+				.andExpect(jsonPath("$.name").value("Table"));
 	}
 }
